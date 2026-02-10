@@ -1,6 +1,8 @@
+export type AnalyzeMode = 'interview' | 'simple' | 'deep'
+
 export type AnalyzeRequest = {
   language: string
-  mode: 'interview' | 'simple' | 'deep'
+  mode: AnalyzeMode
   problem?: string
   constraints?: string
   solution: string
