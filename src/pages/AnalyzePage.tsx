@@ -1,10 +1,35 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { analyzeSolution } from '../api/analyze'
-import type { AnalyzeResponse } from '../types'
+import type { AnalyzeResponse, AnalyzeMode } from '../types'
+
+const LANGUAGE_OPTIONS = [
+  { value: 'java', label: 'Java' },
+  { value: 'python', label: 'Python' },
+  { value: 'cpp', label: 'C++' },
+  { value: 'javascript', label: 'JavaScript' },
+] as const
+
+const MODE_OPTIONS: { value: AnalyzeMode; label: string; description: string }[] = [
+  {
+    value: 'interview',
+    label: 'Interview',
+    description: 'Balanced feedback for interview-style communication and correctness.',
+  },
+  {
+    value: 'simple',
+    label: 'Simple',
+    description: 'Quick, concise insights with less depth.',
+  },
+  {
+    value: 'deep',
+    label: 'Deep',
+    description: 'Thorough analysis with stronger proof and testing guidance.',
+  },
+]
 
 export default function AnalyzePage() {
   const [language, setLanguage] = useState('java')
-  const [mode, setMode] = useState<'interview' | 'simple' | 'deep'>('interview')
+  const [mode, setMode] = useState<AnalyzeMode>('interview')
   const [problem, setProblem] = useState('')
   const [constraints, setConstraints] = useState('')
   const [solution, setSolution] = useState('')
@@ -16,8 +41,15 @@ export default function AnalyzePage() {
   const resultsRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
-    if (result) resultsRef.current?.scrollIntoView({ behavior: 'smooth' })
+    if (result) {
+      resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
   }, [result])
+
+  const selectedMode = useMemo(
+    () => MODE_OPTIONS.find((option) => option.value === mode),
+    [mode]
+  )
 
   function fillExample() {
     setLanguage('java')
@@ -26,10 +58,28 @@ export default function AnalyzePage() {
     setConstraints('n up to 1e5, exactly one solution')
     setSolution(`class Solution {
   public int[] twoSum(int[] nums, int target) {
-    // TODO
-    return new int[]{0, 0};
+    Map<Integer, Integer> seen = new HashMap<>();
+
+    for (int i = 0; i < nums.length; i++) {
+      int complement = target - nums[i];
+      if (seen.containsKey(complement)) {
+        return new int[] {seen.get(complement), i};
+      }
+      seen.put(nums[i], i);
+    }
+
+    return new int[] {-1, -1};
   }
 }`)
+    setError(null)
+  }
+
+  function clearForm() {
+    setProblem('')
+    setConstraints('')
+    setSolution('')
+    setResult(null)
+    setError(null)
   }
 
   async function onAnalyze() {
@@ -46,93 +96,140 @@ export default function AnalyzePage() {
         solution,
       })
       setResult(data)
-    } catch (e: any) {
-      setError(e?.message || 'Request failed')
+    } catch (caughtError: unknown) {
+      if (caughtError instanceof Error) {
+        setError(caughtError.message)
+      } else {
+        setError('Request failed')
+      }
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function copyResultJson() {
+    if (!result) {
+      return
+    }
+
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(result, null, 2))
+    } catch {
+      setError('Unable to copy JSON. Please check browser clipboard permissions.')
     }
   }
 
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-5xl mx-auto p-6 space-y-6">
-        <header className="flex items-center justify-between">
+        <header className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold">AlgoMentor</h1>
             <p className="text-gray-600">Paste a solution, get structured feedback.</p>
           </div>
-          <button
-            onClick={fillExample}
-            className="px-4 py-2 rounded border bg-white hover:bg-gray-100"
-          >
-            Load example
-          </button>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={fillExample}
+              className="px-4 py-2 rounded border bg-white hover:bg-gray-100"
+            >
+              Load example
+            </button>
+            <button
+              onClick={clearForm}
+              className="px-4 py-2 rounded border bg-white hover:bg-gray-100"
+            >
+              Clear
+            </button>
+          </div>
         </header>
 
-        {/* Form */}
+        <div className="rounded-xl border border-blue-100 bg-blue-50 p-4 text-sm text-blue-900">
+          <p className="font-semibold">Mode guidance</p>
+          <p className="mt-1">{selectedMode?.description}</p>
+        </div>
+
         <div className="bg-white rounded-xl border p-4 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
-              <label className="text-sm text-gray-600">Language</label>
+              <label htmlFor="language" className="text-sm text-gray-600">
+                Language
+              </label>
               <select
+                id="language"
                 className="mt-1 w-full border rounded px-3 py-2"
                 value={language}
-                onChange={(e) => setLanguage(e.target.value)}
+                onChange={(event) => setLanguage(event.target.value)}
               >
-                <option value="java">Java</option>
-                <option value="python">Python</option>
-                <option value="cpp">C++</option>
-                <option value="javascript">JavaScript</option>
+                {LANGUAGE_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
               </select>
             </div>
 
             <div>
-              <label className="text-sm text-gray-600">Mode</label>
+              <label htmlFor="mode" className="text-sm text-gray-600">
+                Mode
+              </label>
               <select
+                id="mode"
                 className="mt-1 w-full border rounded px-3 py-2"
                 value={mode}
-                onChange={(e) => setMode(e.target.value as any)}
+                onChange={(event) => setMode(event.target.value as AnalyzeMode)}
               >
-                <option value="interview">Interview</option>
-                <option value="simple">Simple</option>
-                <option value="deep">Deep</option>
+                {MODE_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
               </select>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
-              <label className="text-sm text-gray-600">Problem (optional)</label>
+              <label htmlFor="problem" className="text-sm text-gray-600">
+                Problem (optional)
+              </label>
               <input
+                id="problem"
                 className="mt-1 w-full border rounded px-3 py-2"
                 value={problem}
-                onChange={(e) => setProblem(e.target.value)}
+                onChange={(event) => setProblem(event.target.value)}
                 placeholder="e.g., Two Sum"
               />
             </div>
 
             <div>
-              <label className="text-sm text-gray-600">Constraints (optional)</label>
+              <label htmlFor="constraints" className="text-sm text-gray-600">
+                Constraints (optional)
+              </label>
               <input
+                id="constraints"
                 className="mt-1 w-full border rounded px-3 py-2"
                 value={constraints}
-                onChange={(e) => setConstraints(e.target.value)}
+                onChange={(event) => setConstraints(event.target.value)}
                 placeholder="e.g., n up to 1e5"
               />
             </div>
           </div>
 
           <div>
-            <label className="text-sm text-gray-600">Solution</label>
+            <label htmlFor="solution" className="text-sm text-gray-600">
+              Solution
+            </label>
             <textarea
+              id="solution"
               className="mt-1 w-full border rounded px-3 py-2 h-56 font-mono text-sm"
               value={solution}
-              onChange={(e) => setSolution(e.target.value)}
+              onChange={(event) => setSolution(event.target.value)}
               placeholder="Paste your code here..."
             />
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <button
               onClick={onAnalyze}
               disabled={loading || solution.trim().length === 0}
@@ -141,18 +238,18 @@ export default function AnalyzePage() {
               {loading ? 'Analyzing…' : 'Analyze'}
             </button>
 
+            {loading && <p className="text-sm text-gray-500">Generating structured feedback…</p>}
             {error && <p className="text-red-600">{error}</p>}
           </div>
         </div>
 
-        {/* Results */}
         {result && (
           <div ref={resultsRef} className="space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-semibold">Results</h2>
               <button
                 className="px-4 py-2 rounded border bg-white hover:bg-gray-100"
-                onClick={() => navigator.clipboard.writeText(JSON.stringify(result, null, 2))}
+                onClick={copyResultJson}
               >
                 Copy JSON
               </button>
@@ -160,20 +257,28 @@ export default function AnalyzePage() {
 
             <Section title="Summary">
               <ul className="list-disc pl-6 space-y-1">
-                {result.summary.map((s, i) => <li key={i}>{s}</li>)}
+                {result.summary.map((summaryLine, index) => (
+                  <li key={index}>{summaryLine}</li>
+                ))}
               </ul>
             </Section>
 
             <Section title="Correctness">
               <div className="space-y-2">
-                <div><span className="font-semibold">Intuition:</span> {result.correctness.intuition}</div>
+                <div>
+                  <span className="font-semibold">Intuition:</span> {result.correctness.intuition}
+                </div>
                 <div>
                   <div className="font-semibold">Invariants:</div>
                   <ul className="list-disc pl-6">
-                    {result.correctness.invariants.map((x, i) => <li key={i}>{x}</li>)}
+                    {result.correctness.invariants.map((invariant, index) => (
+                      <li key={index}>{invariant}</li>
+                    ))}
                   </ul>
                 </div>
-                <div><span className="font-semibold">Proof sketch:</span> {result.correctness.proofSketch}</div>
+                <div>
+                  <span className="font-semibold">Proof sketch:</span> {result.correctness.proofSketch}
+                </div>
               </div>
             </Section>
 
@@ -193,10 +298,10 @@ export default function AnalyzePage() {
 
             <Section title="Edge Cases">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {result.edgeCases.map((e, i) => (
-                  <div key={i} className="rounded border p-3 bg-white">
-                    <div className="font-semibold">{e.case}</div>
-                    <div className="text-gray-700">{e.why}</div>
+                {result.edgeCases.map((edgeCase, index) => (
+                  <div key={index} className="rounded border p-3 bg-white">
+                    <div className="font-semibold">{edgeCase.case}</div>
+                    <div className="text-gray-700">{edgeCase.why}</div>
                   </div>
                 ))}
               </div>
@@ -204,7 +309,9 @@ export default function AnalyzePage() {
 
             <Section title="Pitfalls">
               <ul className="list-disc pl-6 space-y-1">
-                {result.pitfalls.map((p, i) => <li key={i}>{p}</li>)}
+                {result.pitfalls.map((pitfall, index) => (
+                  <li key={index}>{pitfall}</li>
+                ))}
               </ul>
             </Section>
 
@@ -219,11 +326,11 @@ export default function AnalyzePage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {result.tests.map((t, i) => (
-                      <tr key={i} className="border-t">
-                        <td className="p-2 font-mono">{t.input}</td>
-                        <td className="p-2 font-mono">{t.expected}</td>
-                        <td className="p-2">{t.purpose}</td>
+                    {result.tests.map((test, index) => (
+                      <tr key={index} className="border-t">
+                        <td className="p-2 font-mono">{test.input}</td>
+                        <td className="p-2 font-mono">{test.expected}</td>
+                        <td className="p-2">{test.purpose}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -233,7 +340,9 @@ export default function AnalyzePage() {
 
             <Section title="Improvements">
               <ul className="list-disc pl-6 space-y-1">
-                {result.improvements.map((x, i) => <li key={i}>{x}</li>)}
+                {result.improvements.map((improvement, index) => (
+                  <li key={index}>{improvement}</li>
+                ))}
               </ul>
             </Section>
           </div>
