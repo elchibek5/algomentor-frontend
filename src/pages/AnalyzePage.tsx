@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { analyzeSolution } from '../api/analyze'
-import type { AnalyzeMode, AnalyzeResponse } from '../types'
+import type { AnalyzeResponse, AnalyzeMode } from '../types'
 
 const LANGUAGE_OPTIONS = [
   { value: 'java', label: 'Java' },
@@ -12,19 +12,19 @@ const LANGUAGE_OPTIONS = [
 const MODE_OPTIONS: { value: AnalyzeMode; label: string; description: string; vibe: string }[] = [
   {
     value: 'interview',
-    label: 'Interview Mode',
+    label: 'Interview',
     description: 'Clear, practical feedback for communicating your thought process.',
     vibe: 'Most balanced choice for mock interview prep.',
   },
   {
     value: 'simple',
-    label: 'Quick Check',
+    label: 'Simple',
     description: 'Fast and lightweight notes when you just want the highlights.',
     vibe: 'Perfect for last-minute revision before class.',
   },
   {
     value: 'deep',
-    label: 'Deep Dive',
+    label: 'Deep',
     description: 'Detailed pass over correctness, complexity, and test quality.',
     vibe: 'Best when you have time to sharpen every detail.',
   },
@@ -161,12 +161,14 @@ export default function AnalyzePage() {
   }
 
   async function copyResultJson() {
-    if (!result) return
+    if (!result) {
+      return
+    }
 
     try {
       await navigator.clipboard.writeText(JSON.stringify(result, null, 2))
     } catch {
-      setError('Could not copy JSON. Check browser clipboard permissions and try again.')
+      setError('Unable to copy JSON. Please check browser clipboard permissions.')
     }
   }
 
@@ -378,7 +380,7 @@ export default function AnalyzePage() {
               </ul>
             </ResultSection>
 
-            <ResultSection title="Test ideas">
+            <ResultSection title="Tests">
               <div className="overflow-auto rounded-lg border border-white/10">
                 <table className="min-w-full text-left text-sm">
                   <thead className="bg-slate-900/80 text-slate-200">
