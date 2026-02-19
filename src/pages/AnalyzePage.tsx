@@ -30,6 +30,46 @@ const MODE_OPTIONS: { value: AnalyzeMode; label: string; description: string; vi
   },
 ]
 
+const QUICK_STARTS = [
+  {
+    title: 'LeetCode Warm-up',
+    problem: 'Valid Parentheses',
+    constraints: '1 <= s.length <= 1e4',
+    language: 'javascript',
+    solution: `function isValid(s) {
+  const pairs = { ')': '(', ']': '[', '}': '{' }
+  const stack = []
+
+  for (const ch of s) {
+    if (!pairs[ch]) {
+      stack.push(ch)
+      continue
+    }
+    if (stack.pop() !== pairs[ch]) {
+      return false
+    }
+  }
+
+  return stack.length === 0
+}`,
+  },
+  {
+    title: 'Greedy Practice',
+    problem: 'Best Time to Buy and Sell Stock',
+    constraints: '1 <= prices.length <= 1e5',
+    language: 'python',
+    solution: `def maxProfit(prices):
+    min_price = float('inf')
+    best = 0
+
+    for price in prices:
+        min_price = min(min_price, price)
+        best = max(best, price - min_price)
+
+    return best`,
+  },
+] as const
+
 export default function AnalyzePage() {
   const [language, setLanguage] = useState('java')
   const [mode, setMode] = useState<AnalyzeMode>('interview')
@@ -81,6 +121,17 @@ export default function AnalyzePage() {
     setConstraints('')
     setSolution('')
     setResult(null)
+    setError(null)
+  }
+
+  function loadQuickStart(index: number) {
+    const quick = QUICK_STARTS[index]
+    if (!quick) return
+
+    setProblem(quick.problem)
+    setConstraints(quick.constraints)
+    setLanguage(quick.language)
+    setSolution(quick.solution)
     setError(null)
   }
 
@@ -145,6 +196,14 @@ export default function AnalyzePage() {
 
         <section className="mb-6 grid gap-6 lg:grid-cols-[1.65fr_1fr]">
           <div className="glass-panel p-5 md:p-6">
+            <div className="mb-4 flex flex-wrap gap-2">
+              {QUICK_STARTS.map((quick, index) => (
+                <button key={quick.title} className="chip-btn" onClick={() => loadQuickStart(index)}>
+                  {quick.title}
+                </button>
+              ))}
+            </div>
+
             <div className="grid gap-4 md:grid-cols-2">
               <Field label="Language" htmlFor="language">
                 <select
@@ -236,6 +295,24 @@ export default function AnalyzePage() {
             </div>
           </aside>
         </section>
+
+        {!result && !loading && (
+          <section className="glass-panel p-5 text-slate-300">
+            <h2 className="text-lg font-semibold text-violet-100">No feedback yet</h2>
+            <p className="mt-2 text-sm">
+              Paste your solution and hit <span className="font-semibold text-slate-100">Analyze solution</span> to
+              generate a full breakdown.
+            </p>
+          </section>
+        )}
+
+        {loading && (
+          <section className="glass-panel p-5">
+            <div className="loading-line" />
+            <div className="loading-line mt-3 w-2/3" />
+            <div className="loading-line mt-3 w-5/6" />
+          </section>
+        )}
 
         {result && (
           <section ref={resultsRef} className="space-y-4 animate-fade-in-up">

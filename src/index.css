@@ -75,6 +75,21 @@ body {
   background: rgba(30, 41, 59, 0.88);
 }
 
+.chip-btn {
+  border: 1px solid rgba(167, 139, 250, 0.45);
+  background: rgba(76, 29, 149, 0.22);
+  color: rgb(237, 233, 254);
+  border-radius: 9999px;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.79rem;
+  transition: transform 0.16s ease, background-color 0.2s ease;
+}
+
+.chip-btn:hover {
+  transform: translateY(-1px);
+  background: rgba(109, 40, 217, 0.38);
+}
+
 .floating-blob {
   position: absolute;
   border-radius: 9999px;
@@ -104,6 +119,19 @@ body {
   animation: fade-up 0.45s ease-out;
 }
 
+.loading-line {
+  height: 0.85rem;
+  border-radius: 9999px;
+  background: linear-gradient(
+    90deg,
+    rgba(30, 41, 59, 0.75) 0%,
+    rgba(124, 58, 237, 0.5) 50%,
+    rgba(30, 41, 59, 0.75) 100%
+  );
+  background-size: 220% 100%;
+  animation: shimmer 1.2s linear infinite;
+}
+
 @keyframes drift {
   0%,
   100% {
@@ -122,5 +150,14 @@ body {
   100% {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -20% 0;
   }
 }
