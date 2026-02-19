@@ -58,6 +58,7 @@ export default function AnalyzePage() {
 
   const trimmedSolutionLength = solution.trim().length
   const canAnalyze = !loading && trimmedSolutionLength >= MIN_SOLUTION_LENGTH
+
   const completionRatio = Math.min(100, Math.round((trimmedSolutionLength / 220) * 100))
   const validationMessage = useMemo(() => {
     if (trimmedSolutionLength === 0) return 'Paste your solution to get started.'
@@ -100,6 +101,37 @@ export default function AnalyzePage() {
     return () => clearTimeout(timer)
   }, [copied])
 
+  function fillExample() {
+    setLanguage('java')
+    setMode('interview')
+    setProblem('Two Sum')
+    setConstraints('n up to 1e5, exactly one solution')
+    setSolution(`class Solution {
+  public int[] twoSum(int[] nums, int target) {
+    HashMap<Integer, Integer> seen = new HashMap<>();
+    for (int i = 0; i < nums.length; i++) {
+      int need = target - nums[i];
+      if (seen.containsKey(need)) return new int[] { seen.get(need), i };
+      seen.put(nums[i], i);
+    }
+    return new int[] {-1, -1};
+  }
+}`)
+    setError(null)
+    setResult(null)
+  }
+
+  function clearAll() {
+    setLanguage(defaultDraft.language)
+    setMode(defaultDraft.mode)
+    setProblem(defaultDraft.problem)
+    setConstraints(defaultDraft.constraints)
+    setSolution(defaultDraft.solution)
+    setResult(null)
+    setError(null)
+    localStorage.removeItem(DRAFT_KEY)
+  }
+
   const onAnalyze = useCallback(async () => {
     if (!canAnalyze) return
 
@@ -135,37 +167,6 @@ export default function AnalyzePage() {
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [canAnalyze, onAnalyze])
-
-  function fillExample() {
-    setLanguage('java')
-    setMode('interview')
-    setProblem('Two Sum')
-    setConstraints('n up to 1e5, exactly one solution')
-    setSolution(`class Solution {
-  public int[] twoSum(int[] nums, int target) {
-    HashMap<Integer, Integer> seen = new HashMap<>();
-    for (int i = 0; i < nums.length; i++) {
-      int need = target - nums[i];
-      if (seen.containsKey(need)) return new int[] { seen.get(need), i };
-      seen.put(nums[i], i);
-    }
-    return new int[] {-1, -1};
-  }
-}`)
-    setError(null)
-    setResult(null)
-  }
-
-  function clearAll() {
-    setLanguage(defaultDraft.language)
-    setMode(defaultDraft.mode)
-    setProblem(defaultDraft.problem)
-    setConstraints(defaultDraft.constraints)
-    setSolution(defaultDraft.solution)
-    setResult(null)
-    setError(null)
-    localStorage.removeItem(DRAFT_KEY)
-  }
 
   async function copyResultJson() {
     if (!result) return
@@ -336,20 +337,28 @@ export default function AnalyzePage() {
 
             <Section title="Summary">
               <ul className="list-disc space-y-1 pl-6">
-                {result.summary.map((item, i) => <li key={`${item}-${i}`}>{item}</li>)}
+                {result.summary.map((item, i) => (
+                  <li key={`${item}-${i}`}>{item}</li>
+                ))}
               </ul>
             </Section>
 
             <Section title="Correctness">
               <div className="space-y-2">
-                <div><span className="font-semibold">Intuition:</span> {result.correctness.intuition}</div>
+                <div>
+                  <span className="font-semibold">Intuition:</span> {result.correctness.intuition}
+                </div>
                 <div>
                   <div className="font-semibold">Invariants:</div>
                   <ul className="list-disc pl-6">
-                    {result.correctness.invariants.map((item, i) => <li key={`${item}-${i}`}>{item}</li>)}
+                    {result.correctness.invariants.map((item, i) => (
+                      <li key={`${item}-${i}`}>{item}</li>
+                    ))}
                   </ul>
                 </div>
-                <div><span className="font-semibold">Proof sketch:</span> {result.correctness.proofSketch}</div>
+                <div>
+                  <span className="font-semibold">Proof sketch:</span> {result.correctness.proofSketch}
+                </div>
               </div>
             </Section>
 
@@ -374,7 +383,9 @@ export default function AnalyzePage() {
 
             <Section title="Pitfalls">
               <ul className="list-disc space-y-1 pl-6">
-                {result.pitfalls.map((item, i) => <li key={`${item}-${i}`}>{item}</li>)}
+                {result.pitfalls.map((item, i) => (
+                  <li key={`${item}-${i}`}>{item}</li>
+                ))}
               </ul>
             </Section>
 
@@ -403,7 +414,9 @@ export default function AnalyzePage() {
 
             <Section title="Improvements">
               <ul className="list-disc space-y-1 pl-6">
-                {result.improvements.map((item, i) => <li key={`${item}-${i}`}>{item}</li>)}
+                {result.improvements.map((item, i) => (
+                  <li key={`${item}-${i}`}>{item}</li>
+                ))}
               </ul>
             </Section>
           </div>
