@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { analyzeSolution } from '../api/analyze'
+import { analyzeSolution, ApiError } from '../api/analyze'
+import StatusBanner from '../components/StatusBanner'
 import type { AnalyzeResponse } from '../types'
 
 const DRAFT_KEY = 'algomentor-analyze-draft-v1'
@@ -52,7 +53,7 @@ export default function AnalyzePage() {
   const [copied, setCopied] = useState(false)
 
   const [result, setResult] = useState<AnalyzeResponse | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<{ message: string; hint?: string } | null>(null)
 
   const resultsRef = useRef<HTMLDivElement | null>(null)
 
@@ -149,8 +150,11 @@ export default function AnalyzePage() {
       })
       setResult(data)
     } catch (e: unknown) {
-      const message = e instanceof Error ? e.message : 'Request failed'
-      setError(message)
+      if (e instanceof ApiError) {
+        setError({ message: e.message, hint: e.hint })
+      } else {
+        setError({ message: e instanceof Error ? e.message : 'Request failed' })
+      }
     } finally {
       setLoading(false)
     }
@@ -174,13 +178,14 @@ export default function AnalyzePage() {
       await navigator.clipboard.writeText(JSON.stringify(result, null, 2))
       setCopied(true)
     } catch {
-      setError('Clipboard is blocked in this browser context.')
+      setError({ message: 'Clipboard is blocked in this browser context.' })
     }
   }
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
       <div className="mx-auto max-w-6xl px-4 py-8 md:px-8">
+        <StatusBanner />
         <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 p-6 md:p-8">
           <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-violet-500/20 blur-3xl" />
           <div className="pointer-events-none absolute -left-24 -bottom-24 h-72 w-72 rounded-full bg-cyan-400/20 blur-3xl" />
@@ -290,8 +295,17 @@ export default function AnalyzePage() {
                   {loading ? 'Analyzing…' : 'Analyze now'}
                 </button>
                 <p className="text-xs text-slate-400">Shortcut: Ctrl/Cmd + Enter</p>
-                {error && <p className="text-sm text-rose-300">{error}</p>}
               </div>
+
+              {error && (
+                <div
+                  role="alert"
+                  className="rounded-xl border border-rose-400/40 bg-rose-500/10 px-4 py-3 text-sm"
+                >
+                  <p className="font-semibold text-rose-200">{error.message}</p>
+                  {error.hint && <p className="mt-1 text-rose-300/90">{error.hint}</p>}
+                </div>
+              )}
             </div>
 
             <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
