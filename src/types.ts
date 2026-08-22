@@ -30,3 +30,10 @@ export type AnalyzeResponse = {
   }[]
   improvements: string[]
 }
+
+export type Health = {
+  ok: boolean
+  mode: 'demo' | 'live'
+  model: string | null
+  message: string
+}
