@@ -20,6 +20,7 @@ actually doing.
 - [Configuration](#configuration) · [Commands](#commands)
 - [Extending it](#extending-it) · [Design decisions](#design-decisions)
 - [Contributing](#contributing) · [Troubleshooting](#troubleshooting)
+- [License](#license)
 
 ---
 
@@ -302,6 +303,12 @@ Confirm the variable is prefixed `VITE_`.
 ```bash
 rm -rf node_modules package-lock.json && npm install
 ```
+
+---
+
+## License
+
+MIT — see [LICENSE](LICENSE).
 
 ---
 
