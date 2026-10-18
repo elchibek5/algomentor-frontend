@@ -45,7 +45,7 @@ npm run dev
 
 Open <http://localhost:5173>, click **Load example**, then **Analyze now**.
 
-**Requirements:** Node.js 18+ here, Java 21+ for the backend.
+**Requirements:** Node.js 20.19+ (or 22.12+) here, Java 21+ for the backend.
 
 ### What you'll see first
 
